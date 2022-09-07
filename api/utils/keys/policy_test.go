@@ -57,22 +57,22 @@ func TestPrivateKeyPolicyError(t *testing.T) {
 			expectIsKeyPolicy:  false,
 			expectKeyPolicyErr: true,
 		}, {
-			desc:               "unkown_key_policy",
-			errIn:              newPrivateKeyPolicyError("unkown_key_policy"),
+			desc:               "unkown key policy",
+			errIn:              newPrivateKeyPolicyError(3),
 			expectIsKeyPolicy:  true,
 			expectKeyPolicyErr: true,
 		}, {
-			desc:              string(PrivateKeyPolicyNone),
+			desc:              PrivateKeyPolicyNone.String(),
 			errIn:             newPrivateKeyPolicyError(PrivateKeyPolicyNone),
 			expectIsKeyPolicy: true,
 			expectKeyPolicy:   PrivateKeyPolicyNone,
 		}, {
-			desc:              string(PrivateKeyPolicyHardwareKey),
+			desc:              PrivateKeyPolicyHardwareKey.String(),
 			errIn:             newPrivateKeyPolicyError(PrivateKeyPolicyHardwareKey),
 			expectIsKeyPolicy: true,
 			expectKeyPolicy:   PrivateKeyPolicyHardwareKey,
 		}, {
-			desc:              string(PrivateKeyPolicyHardwareKeyTouch),
+			desc:              PrivateKeyPolicyHardwareKeyTouch.String(),
 			errIn:             newPrivateKeyPolicyError(PrivateKeyPolicyHardwareKeyTouch),
 			expectIsKeyPolicy: true,
 			expectKeyPolicy:   PrivateKeyPolicyHardwareKeyTouch,

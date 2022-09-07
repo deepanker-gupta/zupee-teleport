@@ -300,7 +300,6 @@ func (id *Identity) CheckAndSetDefaults() error {
 // https://serverfault.com/questions/551477/is-there-reserved-oid-space-for-internal-enterprise-cas
 //
 // http://oid-info.com/get/1.3.9999
-//
 var (
 	// KubeUsersASN1ExtensionOID is an extension ID used when encoding/decoding
 	// license payload into certificates
@@ -630,7 +629,7 @@ func (id *Identity) Subject() (pkix.Name, error) {
 		)
 	}
 
-	if id.PrivateKeyPolicy != "" {
+	if id.PrivateKeyPolicy != 0 {
 		subject.ExtraNames = append(subject.ExtraNames,
 			pkix.AttributeTypeAndValue{
 				Type:  PrivateKeyPolicyASN1ExtensionOID,
@@ -801,7 +800,11 @@ func FromSubject(subject pkix.Name, expires time.Time) (*Identity, error) {
 		case attr.Type.Equal(PrivateKeyPolicyASN1ExtensionOID):
 			val, ok := attr.Value.(string)
 			if ok {
-				id.PrivateKeyPolicy = keys.PrivateKeyPolicy(val)
+				policy, err := keys.ParsePrivateKeyPolicy(val)
+				if err != nil {
+					return nil, trace.Wrap(err)
+				}
+				id.PrivateKeyPolicy = policy
 			}
 		}
 	}

@@ -20,44 +20,67 @@ import (
 )
 
 // PrivateKeyPolicy is the mode required for client private key storage.
-type PrivateKeyPolicy string
+type PrivateKeyPolicy int
 
 const (
 	// PrivateKeyPolicyNone means that the client can store their private keys
 	// anywhere (usually on disk).
-	PrivateKeyPolicyNone PrivateKeyPolicy = "none"
+	PrivateKeyPolicyNone PrivateKeyPolicy = iota
 	// PrivateKeyPolicyHardwareKey means that the client must use a valid
 	// hardware key to generate and store their private keys securely.
-	PrivateKeyPolicyHardwareKey PrivateKeyPolicy = "hardware_key"
+	PrivateKeyPolicyHardwareKey
 	// PrivateKeyPolicyHardwareKeyTouch means that the client must use a valid
 	// hardware key to generate and store their private keys securely, and
 	// this key must require touch to be accessed and used.
-	PrivateKeyPolicyHardwareKeyTouch PrivateKeyPolicy = "hardware_key_touch"
+	PrivateKeyPolicyHardwareKeyTouch
+
+	privateKeyPolicyNoneString             = "none"
+	privateKeyPolicyHardwareKeyString      = "hardware_key"
+	privateKeyPolicyHardwareKeyTouchString = "hardware_key_touch"
 )
+
+// ParsePrivateKeyPolicy parses a private key policy from it's string representation.
+func ParsePrivateKeyPolicy(policyString string) (PrivateKeyPolicy, error) {
+	switch policyString {
+	case privateKeyPolicyNoneString:
+		return PrivateKeyPolicyNone, nil
+	case privateKeyPolicyHardwareKeyString:
+		return PrivateKeyPolicyHardwareKey, nil
+	case privateKeyPolicyHardwareKeyTouchString:
+		return PrivateKeyPolicyHardwareKeyTouch, nil
+	default:
+		return 0, trace.BadParameter("%q is not a valid key policy", policyString)
+	}
+}
+
+// String converts the private key policy to a readable string.
+func (p PrivateKeyPolicy) String() string {
+	switch p {
+	default:
+		fallthrough
+	case PrivateKeyPolicyNone:
+		return privateKeyPolicyNoneString
+	case PrivateKeyPolicyHardwareKey:
+		return privateKeyPolicyHardwareKeyString
+	case PrivateKeyPolicyHardwareKeyTouch:
+		return privateKeyPolicyHardwareKeyTouchString
+	}
+}
 
 // VerifyPolicy verifies that the given policy meets the requirements of this policy.
 // If not, it will return a private key policy error, which can be parsed to retrive
 // the unmet policy.
 func (p PrivateKeyPolicy) VerifyPolicy(policy PrivateKeyPolicy) error {
-	switch p {
-	case PrivateKeyPolicyNone:
-		return nil
-	case PrivateKeyPolicyHardwareKey:
-		if policy == PrivateKeyPolicyHardwareKey || policy == PrivateKeyPolicyHardwareKeyTouch {
-			return nil
-		}
-	case PrivateKeyPolicyHardwareKeyTouch:
-		if policy == PrivateKeyPolicyHardwareKeyTouch {
-			return nil
-		}
+	if p > policy {
+		return newPrivateKeyPolicyError(p)
 	}
-	return newPrivateKeyPolicyError(p)
+	return nil
 }
 
 var privateKeyPolicyErrMsg = "private key policy not met: "
 
 func newPrivateKeyPolicyError(p PrivateKeyPolicy) error {
-	return trace.BadParameter(privateKeyPolicyErrMsg + string(p))
+	return trace.BadParameter(privateKeyPolicyErrMsg + p.String())
 }
 
 // IsPrivateKeyPolicyError returns whether this error is a private key policy
@@ -73,22 +96,14 @@ func IsPrivateKeyPolicyError(err error) bool {
 // error and returns the contained PrivateKeyPolicy.
 func ParsePrivateKeyPolicyError(err error) (PrivateKeyPolicy, error) {
 	if !IsPrivateKeyPolicyError(err) {
-		return "", trace.BadParameter("provided error is not a key policy error")
-
+		return 0, trace.BadParameter("provided error is not a key policy error")
 	}
 
 	policyStr := strings.ReplaceAll(err.Error(), privateKeyPolicyErrMsg, "")
-	policy := PrivateKeyPolicy(policyStr)
-	if err := policy.validate(); err != nil {
-		return "", trace.Wrap(err)
+	policy, err := ParsePrivateKeyPolicy(policyStr)
+	if err != nil {
+		return 0, trace.Wrap(err)
 	}
-	return policy, nil
-}
 
-func (p PrivateKeyPolicy) validate() error {
-	switch p {
-	case PrivateKeyPolicyNone, PrivateKeyPolicyHardwareKey, PrivateKeyPolicyHardwareKeyTouch:
-		return nil
-	}
-	return trace.BadParameter("%q is not a valid key policy", p)
+	return policy, nil
 }

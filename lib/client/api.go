@@ -3359,7 +3359,7 @@ func (tc *TeleportClient) Login(ctx context.Context) (*Key, error) {
 	}
 
 	// Only set private key policy from ping response if not already set.
-	if tc.PrivateKeyPolicy == "" {
+	if tc.PrivateKeyPolicy == 0 {
 		tc.PrivateKeyPolicy = pr.Auth.PrivateKeyPolicy
 	}
 

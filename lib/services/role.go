@@ -1142,19 +1142,13 @@ func (set RoleSet) MFAParams(authPrefRequirement types.RequireMFAType) (params A
 
 // PrivateKeyPolicy returns the enforced private key policy for this role set.
 func (set RoleSet) PrivateKeyPolicy(defaultPolicy keys.PrivateKeyPolicy) keys.PrivateKeyPolicy {
-	if defaultPolicy == keys.PrivateKeyPolicyHardwareKeyTouch {
-		// This is the strictest option so we can return now
-		return defaultPolicy
-	}
-
 	policy := defaultPolicy
 	for _, role := range set {
-		switch rolePolicy := role.GetPrivateKeyPolicy(); rolePolicy {
-		case keys.PrivateKeyPolicyHardwareKey:
+		rolePolicy := role.GetPrivateKeyPolicy()
+
+		// if the role policy is stricter than the current one, use the role policy
+		if err := rolePolicy.VerifyPolicy(policy); err != nil {
 			policy = rolePolicy
-		case keys.PrivateKeyPolicyHardwareKeyTouch:
-			// This is the strictest option so we can return now
-			return keys.PrivateKeyPolicyHardwareKeyTouch
 		}
 	}
 

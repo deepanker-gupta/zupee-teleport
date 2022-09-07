@@ -308,8 +308,8 @@ func (k *Keygen) GenerateUserCertWithoutValidation(c services.UserCertParams) ([
 	if c.ConnectionDiagnosticID != "" {
 		cert.Permissions.Extensions[teleport.CertExtensionConnectionDiagnosticID] = c.ConnectionDiagnosticID
 	}
-	if c.PrivateKeyPolicy != "" {
-		cert.Permissions.Extensions[teleport.CertExtensionPrivateKeyPolicy] = string(c.PrivateKeyPolicy)
+	if c.PrivateKeyPolicy != 0 {
+		cert.Permissions.Extensions[teleport.CertExtensionPrivateKeyPolicy] = c.PrivateKeyPolicy.String()
 	}
 
 	if c.SourceIP != "" {
